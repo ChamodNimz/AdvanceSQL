@@ -339,29 +339,63 @@ DECLARE
     
     --VARIABLE DECLRATION
     v_dept_id DEPARTMENT.DEPARTMENT_ID%TYPE;
-    v_dept_name DEPARTMENT.DEPARTMENT_NAME%TYPE; /*NOTE =====
+    v_dept_name DEPARTMENT.DEPARTMENT_NAME%TYPE; /*
+                                                    NOTE :-
                                                     these variables are for accessing and filling cursor data to these
-                                                    variables BUT a more dynamic way is to 
+                                                    variables BUT a more dynamic way is to declare a row object and
+                                                    call to rows you want in the statement later
+                                                    
+                                                    demo -
+                                                    dept_cursor_row dpt_cursor%ROWTYPE;
+                                                    
+                                                    when calling -
+                                                    this should be in loop -
+                                                    dept_cursor_row.[colomn_name] should get the values
                                                   */
     
-    
+   
     --ASSUMING THE DEPARTMENT ID IS NOT DUPLIACTING ANY VALUES
-    CURSOR dpt_cursor IS
-    SELECT DEPARTMENT_ID,DEPARTMENT_NAME 
-    FROM DEPARTMENT 
-    WHERE DEPARTMENT_ID <300; --changed the value coz of my data set (value should be 100)
-
-    CURSOR emp_cusor
+    --DEPARTMENT CURSOR
+    CURSOR dpt_cursor
+    IS
+        SELECT DEPARTMENT_ID,DEPARTMENT_NAME 
+        FROM DEPARTMENT 
+        WHERE DEPARTMENT_ID <300
+        ORDER BY DEPARTMENT_ID; --changed the value coz of my dataset (value should be 100)
+    
+    --EMPLOYEE CURSOR
+    CURSOR emp_cursor (p_dept_id NUMBER) 
+    IS
+        SELECT EMP_NAME, EMP_ID, EMP_JOINDATE, EMP_DESIG, EMP_SAL, DEPT_ID
+        FROM EMPLOYEE
+        WHERE EMP_ID < 120 AND DEPT_ID = p_dept_id;
+        
+        
+     -- EMP_ROW OBJECT VARIABLE   
+     emp_cursor_row emp_cursor%ROWTYPE;
 BEGIN
 
     OPEN dpt_cursor;
     LOOP
-        EXIT WHEN dpt_cursor%NOTFOUND 
-        --cursor calling 
-            FETCH dept_cursor INTO v_dept_id, v_dept_name 
-            emp_cusor();
-    END LOOP;
-
+        EXIT WHEN dpt_cursor%NOTFOUND;
+         
+            FETCH dpt_cursor INTO v_dept_id, v_dept_name;
+            
+                DBMS_OUTPUT.PUT_LINE(v_dept_id||' '||v_dept_name);
+            -- emp cursor calling 
+            OPEN emp_cursor(v_dept_id);
+            
+            LOOP
+                EXIT WHEN emp_cursor%NOTFOUND;
+                
+                    FETCH emp_cursor INTO emp_cursor_row;
+                    dbms_output.put_line(emp_cursor_row.EMP_ID ||' '||emp_cursor_row.EMP_NAME ||' '||emp_cursor_row.EMP_DESIG);
+                   
+                END LOOP;
+            
+                CLOSE emp_cursor;
+            END LOOP;
+   
 END;
-
+--WORKS
 
